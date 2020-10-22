@@ -36,12 +36,13 @@ class profile_freeipa (
 
   if $manage_firewall {
     # Add service freeipa-ldap and freeipa-ldaps
-    firewall {' 00000 allow freeipa-ldap':
-      dport  => 1234,
+    firewall {' 00389 allow freeipa-ldap':
+      dport  => 389,
       action => 'accept',
     }
-    firewall {' 00000 allow freeipa-ldaps':
-      dport  => 1234,
+    firewall {' 00636 allow freeipa-ldaps':
+      dport  => 636,
       action => 'accept',
     }
+  }
 }
