@@ -2,13 +2,13 @@
 #
 #
 class profile_freeipa (
-  Stdlib::Fqdn             $domain                      = $::profile_base::network::domain,
-  Enum['master','replica'] $ipa_role                    = 'replica',
-  Boolean                  $manage_firewall             = true,
-  Stdlib::Ip::Address      $ip_address                  = $::profile_base::network::ip_address,
-  Stdlib::Fqdn             $ipa_master_fqdn             = 'freeipa01.cloud.beeckmans.io',
   String['8']              $puppet_admin_password,
   String['8']              $directory_services_password,
+  Stdlib::Fqdn             $domain                      = $::profile_base::network::domain,
+  Enum['master','replica'] $ipa_role                    = 'replica',
+  Boolean                  $manage_firewall_entry       = true,
+  Stdlib::Ip::Address      $ip_address                  = $::profile_base::network::ip_address,
+  Stdlib::Fqdn             $ipa_master_fqdn             = 'freeipa01.cloud.beeckmans.io',
 ) {
   class { 'freeipa':
     ipa_role                    => $ipa_role,
@@ -34,7 +34,7 @@ class profile_freeipa (
     },
   }
 
-  if $manage_firewall {
+  if $manage_firewall_entry {
     # Add service freeipa-ldap and freeipa-ldaps
     firewall {' 00389 allow freeipa-ldap':
       dport  => 389,
