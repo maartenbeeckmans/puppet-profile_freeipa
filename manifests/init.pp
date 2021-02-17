@@ -2,13 +2,14 @@
 #
 #
 class profile_freeipa (
-  String['8']              $puppet_admin_password,
-  String['8']              $directory_services_password,
-  Stdlib::Fqdn             $domain                      = $::profile_base::network::domain,
+  String[8]                $puppet_admin_password,
+  String[8]                $directory_services_password,
+  Stdlib::Fqdn             $ipa_master_fqdn,
+  Stdlib::Fqdn             $domain                      = $facts['networking']['domain'],
   Enum['master','replica'] $ipa_role                    = 'replica',
   Boolean                  $manage_firewall_entry       = true,
-  Stdlib::Ip::Address      $ip_address                  = $::profile_base::network::ip_address,
-  Stdlib::Fqdn             $ipa_master_fqdn             = 'freeipa01.cloud.beeckmans.io',
+  Stdlib::Ip::Address      $ip_address                  = $facts['networking']['ip'],
+  Stdlib::Fqdn             $ipa_server_fqdn             = $facts['networking']['fqdn'],
 ) {
   class { 'freeipa':
     ipa_role                    => $ipa_role,
@@ -24,23 +25,54 @@ class profile_freeipa (
     },
     install_ipa_server          => true,
     ip_address                  => $ip_address,
+    idstart                     => 100000,
     enable_ip_address           => true,
     enable_hostname             => true,
+    configure_dns_server        => false,
     manage_host_entry           => true,
     install_epel                => false,
-    ipa_master_fqdn             => $ipa_role ? {
-      'master' => undef,
-      default  => $ipa_master_fqdn,
-    },
+    ipa_master_fqdn             => $ipa_master_fqdn,
   }
 
   if $manage_firewall_entry {
-    # Add service freeipa-ldap and freeipa-ldaps
-    firewall {' 00389 allow freeipa-ldap':
+    firewall { '00080 allow freeipa http':
+      dport  => 80,
+      action => 'accept',
+    }
+    firewall { '00088 allow freeipa http tcp':
+      dport  => 88,
+      action => 'accept',
+      proto  => 'tcp',
+    }
+    firewall { '00088 allow freeipa http udp':
+      dport  => 88,
+      action => 'accept',
+      proto  => 'udp',
+    }
+    firewall { '00123 allow freeipa ntp udp':
+      dport  => 123,
+      action => 'accept',
+      proto  => 'udp',
+    }
+    firewall { '00389 allow freeipa ldap':
       dport  => 389,
       action => 'accept',
     }
-    firewall {' 00636 allow freeipa-ldaps':
+    firewall { '00443 allow freeipa http':
+      dport  => 443,
+      action => 'accept',
+    }
+    firewall { '00464 allow freeipa kerberos tcp':
+      dport  => 464,
+      action => 'accept',
+      proto  => 'tcp',
+    }
+    firewall { '00464 allow freeipa kerberos udp':
+      dport  => 464,
+      action => 'accept',
+      proto  => 'udp',
+    }
+    firewall { '00636 allow freeipa ldaps':
       dport  => 636,
       action => 'accept',
     }
