@@ -101,8 +101,9 @@ class profile_freeipa (
     consul::service { $sd_service_name_http:
       checks => [
         {
-          http     => "http://${ipa_server_fqdn}:80/ipa/ui",
-          interval => '10s',
+          http            => "http://${ipa_server_fqdn}:80/ipa/ui",
+          interval        => '10s',
+          tls_skip_verify => true,
         }
       ],
       port   => 80,
@@ -112,7 +113,7 @@ class profile_freeipa (
     consul::service { $sd_service_name_https:
       checks => [
         {
-          https           => "http://${ipa_server_fqdn}:443/ipa/ui",
+          http            => "https://${ipa_server_fqdn}:443/ipa/ui",
           interval        => '10s',
           tls_skip_verify => true,
         }
@@ -143,4 +144,6 @@ class profile_freeipa (
       tags   => $sd_service_tags_ldaps,
     }
   }
+
+  include profile_freeipa::ssh
 }
