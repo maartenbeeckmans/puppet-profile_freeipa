@@ -2,27 +2,45 @@
 #
 #
 class profile_freeipa (
-  String[8]                $puppet_admin_password,
-  String[8]                $directory_services_password,
+  Optional[String[8]]      $puppet_admin_password,
+  Optional[String[8]]      $directory_services_password,
   Stdlib::Fqdn             $ipa_master_fqdn,
-  Stdlib::Fqdn             $domain                      = $facts['networking']['domain'],
-  Enum['master','replica'] $ipa_role                    = 'replica',
-  Boolean                  $manage_firewall_entry       = true,
-  Stdlib::Ip::Address      $ip_address                  = $facts['networking']['ip'],
-  Stdlib::Fqdn             $ipa_server_fqdn             = $facts['networking']['fqdn'],
+  Stdlib::Fqdn             $domain,
+  Enum['master','replica'] $ipa_role,
+  Boolean                  $manage_firewall_entry,
+  Stdlib::Ip::Address      $ip_address,
+  Stdlib::Fqdn             $ipa_server_fqdn,
+  String                   $sd_service_name_http,
+  Array[String]            $sd_service_tags_http,
+  String                   $sd_service_name_https,
+  Array[String]            $sd_service_tags_https,
+  String                   $sd_service_name_ldap,
+  Array[String]            $sd_service_tags_ldap,
+  String                   $sd_service_name_ldaps,
+  Array[String]            $sd_service_tags_ldaps,
+  Boolean                  $manage_sd_service            = lookup('manage_sd_service', Boolean, first, true),
 ) {
+  if $facts['os']['family'] == 'RedHat' {
+    package { '@idm:DL1':
+      ensure => present,
+      before => Class['Freeipa'],
+    }
+  }
+
+  if $ipa_role == 'master' {
+    $_puppet_admin_password = $puppet_admin_password
+    $_directory_services_password = $directory_services_password
+  } else {
+    $_puppet_admin_password = undef
+    $_directory_services_password = undef
+  }
+
   class { 'freeipa':
     ipa_role                    => $ipa_role,
     domain                      => $domain,
     ipa_server_fqdn             => $ipa_server_fqdn,
-    puppet_admin_password       => $ipa_role ? {
-      'master' => $puppet_admin_password,
-      default  => undef,
-    },
-    directory_services_password => $ipa_role ? {
-      'master' => $directory_services_password,
-      default  => undef,
-    },
+    puppet_admin_password       => $_puppet_admin_password,
+    directory_services_password => $_directory_services_password,
     install_ipa_server          => true,
     ip_address                  => $ip_address,
     idstart                     => 100000,
@@ -31,6 +49,7 @@ class profile_freeipa (
     configure_dns_server        => false,
     manage_host_entry           => true,
     install_epel                => false,
+    webui_redirect              => false,
     ipa_master_fqdn             => $ipa_master_fqdn,
   }
 
@@ -39,12 +58,12 @@ class profile_freeipa (
       dport  => 80,
       action => 'accept',
     }
-    firewall { '00088 allow freeipa http tcp':
+    firewall { '00088 allow freeipa kerberos tcp':
       dport  => 88,
       action => 'accept',
       proto  => 'tcp',
     }
-    firewall { '00088 allow freeipa http udp':
+    firewall { '00088 allow freeipa kerberos udp':
       dport  => 88,
       action => 'accept',
       proto  => 'udp',
@@ -75,6 +94,53 @@ class profile_freeipa (
     firewall { '00636 allow freeipa ldaps':
       dport  => 636,
       action => 'accept',
+    }
+  }
+
+  if $manage_sd_service {
+    consul::service { $sd_service_name_http:
+      checks => [
+        {
+          http     => "http://${ipa_server_fqdn}:80/ipa/ui",
+          interval => '10s',
+        }
+      ],
+      port   => 80,
+      tags   => $sd_service_tags_http,
+    }
+
+    consul::service { $sd_service_name_https:
+      checks => [
+        {
+          https           => "http://${ipa_server_fqdn}:443/ipa/ui",
+          interval        => '10s',
+          tls_skip_verify => true,
+        }
+      ],
+      port   => 80,
+      tags   => $sd_service_tags_https,
+    }
+
+    consul::service { $sd_service_name_ldap:
+      checks => [
+        {
+          tcp      => "${ipa_server_fqdn}:389",
+          interval => '10s',
+        }
+      ],
+      port   => 389,
+      tags   => $sd_service_tags_ldap,
+    }
+
+    consul::service { $sd_service_name_ldaps:
+      checks => [
+        {
+          tcp      => "${ipa_server_fqdn}:636",
+          interval => '10s',
+        }
+      ],
+      port   => 636,
+      tags   => $sd_service_tags_ldaps,
     }
   }
 }
