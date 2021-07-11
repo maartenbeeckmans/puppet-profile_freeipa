@@ -4,6 +4,7 @@
 class profile_freeipa (
   Optional[String[8]]      $puppet_admin_password,
   Optional[String[8]]      $directory_services_password,
+  Optional[String[8]]      $domain_join_password,
   Stdlib::Fqdn             $ipa_master_fqdn,
   Stdlib::Fqdn             $domain,
   Enum['master','replica'] $ipa_role,
@@ -27,31 +28,47 @@ class profile_freeipa (
     }
   }
 
-  if $ipa_role == 'master' {
-    $_puppet_admin_password = $puppet_admin_password
-    $_directory_services_password = $directory_services_password
-  } else {
-    $_puppet_admin_password = undef
-    $_directory_services_password = undef
+  case $ipa_role {
+    'master': {
+      class { 'freeipa':
+        ipa_role                    => 'master',
+        domain                      => $domain,
+        ipa_server_fqdn             => $ipa_server_fqdn,
+        puppet_admin_password       => $puppet_admin_password,
+        directory_services_password => $directory_services_password,
+        install_ipa_server          => true,
+        ip_address                  => $ip_address,
+        idstart                     => 100000,
+        enable_ip_address           => true,
+        enable_hostname             => true,
+        configure_dns_server        => false,
+        manage_host_entry           => true,
+        install_epel                => false,
+        webui_redirect              => false,
+        ipa_master_fqdn             => $ipa_master_fqdn,
+      }
+    }
+    'replica': {
+      class { 'freeipa':
+        ipa_role             => 'replica',
+        domain               => $domain,
+        ipa_server_fqdn      => $ipa_server_fqdn,
+        domain_join_password => $directory_services_password,
+        install_ipa_server   => true,
+        ip_address           => $ip_address,
+        idstart              => 100000,
+        enable_ip_address    => true,
+        enable_hostname      => true,
+        manage_host_entry    => true,
+        install_epel         => false,
+        ipa_master_fqdn      => $ipa_master_fqdn,
+      }
+    }
+    default: {
+      # Will never do this, adding for linter
+    }
   }
 
-  class { 'freeipa':
-    ipa_role                    => $ipa_role,
-    domain                      => $domain,
-    ipa_server_fqdn             => $ipa_server_fqdn,
-    puppet_admin_password       => $_puppet_admin_password,
-    directory_services_password => $_directory_services_password,
-    install_ipa_server          => true,
-    ip_address                  => $ip_address,
-    idstart                     => 100000,
-    enable_ip_address           => true,
-    enable_hostname             => true,
-    configure_dns_server        => false,
-    manage_host_entry           => true,
-    install_epel                => false,
-    webui_redirect              => false,
-    ipa_master_fqdn             => $ipa_master_fqdn,
-  }
 
   if $manage_firewall_entry {
     firewall { '00080 allow freeipa http':

@@ -1,4 +1,7 @@
 ---
+profile_freeipa::puppet_admin_password: ~
+profile_freeipa::directory_services_password: ~
+profile_freeipa::domain_join_password: ~
 profile_freeipa::domain: "%{facts.networking.domain}"
 profile_freeipa::ipa_role: 'replica'
 profile_freeipa::manage_firewall_entry: true
