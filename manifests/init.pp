@@ -50,18 +50,20 @@ class profile_freeipa (
     }
     'replica': {
       class { 'freeipa':
-        ipa_role             => 'replica',
-        domain               => $domain,
-        ipa_server_fqdn      => $ipa_server_fqdn,
-        domain_join_password => $directory_services_password,
-        install_ipa_server   => true,
-        ip_address           => $ip_address,
-        idstart              => 100000,
-        enable_ip_address    => true,
-        enable_hostname      => true,
-        manage_host_entry    => true,
-        install_epel         => false,
-        ipa_master_fqdn      => $ipa_master_fqdn,
+        ipa_role                    => 'replica',
+        domain                      => $domain,
+        ipa_server_fqdn             => $ipa_server_fqdn,
+        puppet_admin_password       => $puppet_admin_password,
+        directory_services_password => $directory_services_password,
+        install_ipa_server          => true,
+        ip_address                  => $ip_address,
+        idstart                     => 100000,
+        enable_ip_address           => true,
+        enable_hostname             => true,
+        manage_host_entry           => true,
+        configure_dns_server        => false,
+        install_epel                => false,
+        ipa_master_fqdn             => $ipa_master_fqdn,
       }
     }
     default: {
