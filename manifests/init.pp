@@ -22,9 +22,11 @@ class profile_freeipa (
   Boolean                  $manage_sd_service            = lookup('manage_sd_service', Boolean, first, true),
 ) {
   if $facts['os']['family'] == 'RedHat' {
-    package { '@idm:DL1':
-      ensure => present,
-      before => Class['Freeipa'],
+    package { 'idm':
+      ensure   => 'DL1',
+      flavor   => 'common',
+      provider => 'dnfmodule',
+      before   => Class['Freeipa'],
     }
   }
 
