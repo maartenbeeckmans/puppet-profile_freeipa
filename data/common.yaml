@@ -7,12 +7,12 @@ profile_freeipa::ipa_role: 'replica'
 profile_freeipa::manage_firewall_entry: true
 profile_freeipa::ip_address: "%{facts.networking.ip}"
 profile_freeipa::ipa_server_fqdn: "%{facts.networking.fqdn}"
-profile_freeipa::sd_service_name_http: 'freeipa_http'
+profile_freeipa::sd_service_name_http: 'freeipa-http'
 profile_freeipa::sd_service_tags_http: []
-profile_freeipa::sd_service_name_https: 'freeipa_https'
+profile_freeipa::sd_service_name_https: 'freeipa-https'
 profile_freeipa::sd_service_tags_https: []
-profile_freeipa::sd_service_name_ldap: 'freeipa_ldap'
+profile_freeipa::sd_service_name_ldap: 'freeipa-ldap'
 profile_freeipa::sd_service_tags_ldap: []
-profile_freeipa::sd_service_name_ldaps: 'freeipa_ldaps'
+profile_freeipa::sd_service_name_ldaps: 'freeipa-ldaps'
 profile_freeipa::sd_service_tags_ldaps: []
 ...
